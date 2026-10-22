@@ -94,7 +94,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 32 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 16, marginBottom: 24 }}>
           <div className="card">
             <h3 style={{ fontSize: "1rem", marginBottom: 16 }}>⚡ Aksi Cepat</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

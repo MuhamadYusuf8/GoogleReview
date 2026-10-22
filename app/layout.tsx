@@ -1,5 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0a0f1e",
+};
 
 export const metadata: Metadata = {
   title: { default: "ReviewLink – Dynamic QR & NFC Redirector", template: "%s | ReviewLink" },

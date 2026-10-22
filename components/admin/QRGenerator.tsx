@@ -135,7 +135,7 @@ export default function QRGenerator({ slug, shortDomain }: QRGeneratorProps) {
           id={`download-png-${slug}`}
           className="btn btn-primary btn-sm"
           onClick={downloadPNG}
-          style={{ flex: 1 }}
+          style={{ flex: "1 1 140px", minHeight: 44 }}
         >
           ⬇️ Download PNG (1200px)
         </button>
@@ -143,7 +143,7 @@ export default function QRGenerator({ slug, shortDomain }: QRGeneratorProps) {
           id={`download-svg-${slug}`}
           className="btn btn-secondary btn-sm"
           onClick={downloadSVG}
-          style={{ flex: 1 }}
+          style={{ flex: "1 1 140px", minHeight: 44 }}
         >
           ⬇️ Download SVG
         </button>
@@ -165,13 +165,17 @@ export default function QRGenerator({ slug, shortDomain }: QRGeneratorProps) {
           wordBreak: "break-all",
           display: "block",
           marginBottom: 10,
+          background: "rgba(0,0,0,0.25)",
+          padding: "8px 10px",
+          borderRadius: "var(--radius-sm)",
         }}>
           {nfcUrl}
         </code>
         <button
           id={`copy-nfc-${slug}`}
-          className="btn btn-ghost btn-sm"
+          className="btn btn-secondary btn-sm"
           onClick={copyNfcUrl}
+          style={{ width: "100%", minHeight: 40, justifyContent: "center" }}
         >
           📋 Salin URL NFC
         </button>

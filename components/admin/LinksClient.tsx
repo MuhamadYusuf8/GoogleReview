@@ -338,8 +338,8 @@ export default function LinksClient({
         </button>
       </div>
 
-      {/* Table */}
-      <div className="table-wrapper">
+      {/* Desktop Table View */}
+      <div className="table-wrapper desktop-table-wrapper">
         <table>
           <thead>
             <tr>
@@ -435,6 +435,97 @@ export default function LinksClient({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card List View (< 769px) */}
+      <div className="mobile-card-list">
+        {filtered.length === 0 ? (
+          <div className="card" style={{ textAlign: "center", padding: 32, color: "var(--color-text-muted)" }}>
+            {search || statusFilter !== "all" ? "Tidak ada link yang cocok." : "Belum ada link. Klik '+ Link Baru' untuk mulai."}
+          </div>
+        ) : (
+          filtered.map((link) => {
+            const merchant = Array.isArray(link.merchants) ? link.merchants[0] : link.merchants;
+            return (
+              <div key={link.id} className="mobile-card">
+                <div className="mobile-card-header">
+                  <div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--color-primary)", fontFamily: "monospace" }}>
+                      /{link.slug}
+                    </div>
+                    {link.label && (
+                      <div style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)", marginTop: 2 }}>
+                        {link.label}
+                      </div>
+                    )}
+                  </div>
+                  <select
+                    id={`mobile-link-status-${link.id}`}
+                    className="form-select"
+                    style={{ padding: "4px 8px", fontSize: "0.75rem", width: "auto", minHeight: 34 }}
+                    value={link.status}
+                    disabled={statusLoading === link.id}
+                    onChange={(e) =>
+                      handleStatusChange(link, e.target.value as "active" | "paused" | "archived")
+                    }
+                  >
+                    <option value="active">Aktif</option>
+                    <option value="paused">Dijeda</option>
+                    <option value="archived">Diarsipkan</option>
+                  </select>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.8125rem" }}>
+                  <div style={{ color: "var(--color-text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span>🏪</span>
+                    <strong style={{ color: "var(--color-text-primary)" }}>{merchant?.name ?? "—"}</strong>
+                  </div>
+                  <div style={{ background: "rgba(59,130,246,0.1)", color: "var(--color-primary)", padding: "2px 8px", borderRadius: "var(--radius-full)", fontWeight: 700, fontSize: "0.75rem" }}>
+                    📊 {link.scan_count.toLocaleString("id")} scan
+                  </div>
+                </div>
+
+                <div style={{
+                  background: "var(--color-bg-elevated)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "8px 10px",
+                  fontSize: "0.75rem",
+                  color: "var(--color-text-muted)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}>
+                  <span style={{ marginRight: 6 }}>🎯</span>
+                  <a
+                    href={link.target_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    {link.target_url}
+                  </a>
+                </div>
+
+                <div className="mobile-card-actions">
+                  <button
+                    id={`mobile-qr-btn-${link.id}`}
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setQrLink(link)}
+                  >
+                    📷 QR & NFC
+                  </button>
+                  <button
+                    id={`mobile-edit-btn-${link.id}`}
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setEditingLink(link)}
+                  >
+                    ✏️ Edit Target
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Modals */}

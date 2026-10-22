@@ -67,7 +67,7 @@ function MerchantModal({
             <input id="merchant-name" name="name" className="form-input" required defaultValue={merchant?.name} placeholder="Kopi Senja Tebet" />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
             <div className="form-group">
               <label className="form-label">Nama Kontak</label>
               <input id="merchant-contact-name" name="contact_name" className="form-input" defaultValue={merchant?.contact_name ?? ""} placeholder="Budi Santoso" />
@@ -164,8 +164,8 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
         </button>
       </div>
 
-      {/* Table */}
-      <div className="table-wrapper">
+      {/* Desktop Table View */}
+      <div className="table-wrapper desktop-table-wrapper">
         <table>
           <thead>
             <tr>
@@ -233,6 +233,74 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card List View (< 769px) */}
+      <div className="mobile-card-list">
+        {filtered.length === 0 ? (
+          <div className="card" style={{ textAlign: "center", padding: 32, color: "var(--color-text-muted)" }}>
+            {search ? "Tidak ada merchant yang cocok." : "Belum ada merchant. Klik '+ Tambah Merchant' untuk mulai."}
+          </div>
+        ) : (
+          filtered.map((m) => {
+            const linkCount = Array.isArray(m.links) ? (m.links[0] as { count: number })?.count ?? 0 : 0;
+            return (
+              <div key={m.id} className="mobile-card">
+                <div className="mobile-card-header">
+                  <div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--color-text-primary)" }}>
+                      {m.name}
+                    </div>
+                    {m.notes && (
+                      <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: 2 }}>
+                        {m.notes}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`badge ${m.is_active ? "badge-active" : "badge-archived"}`}>
+                    {m.is_active ? "Aktif" : "Nonaktif"}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: "0.8125rem", color: "var(--color-text-secondary)" }}>
+                  {(m.contact_name || m.contact_phone) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span>👤</span>
+                      <span>
+                        {m.contact_name} {m.contact_phone && (
+                          <a href={`tel:${m.contact_phone}`} style={{ color: "var(--color-primary)", marginLeft: 4 }}>
+                            ({m.contact_phone})
+                          </a>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ marginLeft: "auto", background: "rgba(59,130,246,0.1)", color: "var(--color-primary)", padding: "2px 8px", borderRadius: "var(--radius-full)", fontWeight: 600, fontSize: "0.75rem" }}>
+                    🔗 {linkCount} link
+                  </div>
+                </div>
+
+                <div className="mobile-card-actions">
+                  <button
+                    id={`mobile-edit-merchant-${m.id}`}
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => { setEditingMerchant(m); setShowModal(true); }}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    id={`mobile-toggle-merchant-${m.id}`}
+                    className={`btn btn-sm ${m.is_active ? "btn-danger" : "btn-primary"}`}
+                    onClick={() => handleToggle(m)}
+                    disabled={loading === m.id}
+                  >
+                    {loading === m.id ? "..." : m.is_active ? "Nonaktifkan" : "Aktifkan"}
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Modal */}

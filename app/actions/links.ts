@@ -175,3 +175,19 @@ export async function checkSlugAvailabilityAction(slug: string): Promise<{ avail
     return { available: false };
   }
 }
+
+export async function deleteLinkAction(linkId: string): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin();
+
+    // Hapus link (link_target_history dan scan_events otomatis terhapus karena 'on delete cascade')
+    const { error } = await supabase.from("links").delete().eq("id", linkId);
+    if (error) return { success: false, error: "Gagal menghapus link: " + error.message };
+
+    revalidatePath("/admin/links");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (e: unknown) {
+    return { success: false, error: e instanceof Error ? e.message : "Terjadi kesalahan" };
+  }
+}

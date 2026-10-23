@@ -6,6 +6,7 @@ import {
   createMerchantAction,
   updateMerchantAction,
   toggleMerchantStatusAction,
+  deleteMerchantAction,
 } from "@/app/actions/merchants";
 import { buildReviewUrl } from "@/lib/validations";
 
@@ -123,7 +124,10 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingMerchant, setEditingMerchant] = useState<Merchant | null>(null);
+  const [deletingMerchant, setDeletingMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => { setMerchants(initialMerchants); }, [initialMerchants]);
 
@@ -139,6 +143,20 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
       prev.map((m) => m.id === merchant.id ? { ...m, is_active: !m.is_active } : m)
     );
     setLoading(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingMerchant) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    const res = await deleteMerchantAction(deletingMerchant.id);
+    if (res.success) {
+      setMerchants((prev) => prev.filter((m) => m.id !== deletingMerchant.id));
+      setDeletingMerchant(null);
+    } else {
+      setDeleteError(res.error ?? "Gagal menghapus merchant");
+    }
+    setDeleteLoading(false);
   };
 
   return (
@@ -209,21 +227,32 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <button
                           id={`edit-merchant-${m.id}`}
                           className="btn btn-ghost btn-sm"
                           onClick={() => { setEditingMerchant(m); setShowModal(true); }}
+                          title="Edit Merchant"
                         >
                           ✏️ Edit
                         </button>
                         <button
                           id={`toggle-merchant-${m.id}`}
-                          className={`btn btn-sm ${m.is_active ? "btn-danger" : "btn-secondary"}`}
+                          className={`btn btn-sm ${m.is_active ? "btn-secondary" : "btn-primary"}`}
+                          style={m.is_active ? { color: "var(--color-warning)", borderColor: "rgba(245,158,11,0.3)" } : {}}
                           onClick={() => handleToggle(m)}
                           disabled={loading === m.id}
+                          title={m.is_active ? "Nonaktifkan merchant" : "Aktifkan merchant"}
                         >
                           {loading === m.id ? "..." : m.is_active ? "Nonaktifkan" : "Aktifkan"}
+                        </button>
+                        <button
+                          id={`delete-merchant-${m.id}`}
+                          className="btn btn-danger btn-sm"
+                          onClick={() => { setDeleteError(null); setDeletingMerchant(m); }}
+                          title="Hapus Merchant"
+                        >
+                          🗑️ Hapus
                         </button>
                       </div>
                     </td>
@@ -290,11 +319,19 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
                   </button>
                   <button
                     id={`mobile-toggle-merchant-${m.id}`}
-                    className={`btn btn-sm ${m.is_active ? "btn-danger" : "btn-primary"}`}
+                    className={`btn btn-sm ${m.is_active ? "btn-secondary" : "btn-primary"}`}
+                    style={m.is_active ? { color: "var(--color-warning)", borderColor: "rgba(245,158,11,0.3)" } : {}}
                     onClick={() => handleToggle(m)}
                     disabled={loading === m.id}
                   >
                     {loading === m.id ? "..." : m.is_active ? "Nonaktifkan" : "Aktifkan"}
+                  </button>
+                  <button
+                    id={`mobile-delete-merchant-${m.id}`}
+                    className="btn btn-danger btn-sm"
+                    onClick={() => { setDeleteError(null); setDeletingMerchant(m); }}
+                  >
+                    🗑️ Hapus
                   </button>
                 </div>
               </div>
@@ -303,12 +340,76 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
         )}
       </div>
 
-      {/* Modal */}
+      {/* Modal Edit / Tambah */}
       {showModal && (
         <MerchantModal
           merchant={editingMerchant}
           onClose={() => { setShowModal(false); setEditingMerchant(null); }}
         />
+      )}
+
+      {/* Modal Konfirmasi Hapus */}
+      {deletingMerchant && (
+        <div className="modal-overlay" onClick={() => !deleteLoading && setDeletingMerchant(null)}>
+          <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--color-danger)" }}>
+                <span>🗑️</span>
+                <span>Hapus Merchant</span>
+              </h2>
+              <button
+                className="modal-close"
+                disabled={deleteLoading}
+                onClick={() => setDeletingMerchant(null)}
+                id="cancel-delete-x-btn"
+              >
+                ×
+              </button>
+            </div>
+
+            {deleteError && (
+              <div className="alert alert-error" style={{ marginBottom: 16 }}>⚠️ {deleteError}</div>
+            )}
+
+            <p style={{ color: "var(--color-text-primary)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: 16 }}>
+              Apakah Anda yakin ingin menghapus merchant <strong>{deletingMerchant.name}</strong>?
+            </p>
+
+            {((Array.isArray(deletingMerchant.links) ? (deletingMerchant.links[0] as { count: number })?.count ?? 0 : 0) > 0) && (
+              <div className="alert alert-warning" style={{ fontSize: "0.8125rem", marginBottom: 16 }}>
+                <span>⚠️</span>
+                <div>
+                  <strong>Perhatian:</strong> Merchant ini memiliki{" "}
+                  <strong>
+                    {Array.isArray(deletingMerchant.links) ? (deletingMerchant.links[0] as { count: number })?.count ?? 0 : 0} link aktif
+                  </strong>.
+                  Menghapus merchant ini juga akan <strong>menghapus semua link dan data scan terkait</strong> secara permanen!
+                </div>
+              </div>
+            )}
+
+            <div className="modal-footer" style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={deleteLoading}
+                onClick={() => setDeletingMerchant(null)}
+                id="cancel-delete-btn"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                id="confirm-delete-merchant-btn"
+                className="btn btn-danger"
+                disabled={deleteLoading}
+                onClick={handleDelete}
+              >
+                {deleteLoading ? "Menghapus..." : "🗑️ Ya, Hapus Merchant"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

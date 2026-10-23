@@ -7,6 +7,7 @@ import {
   createLinkAction,
   updateLinkTargetAction,
   updateLinkStatusAction,
+  deleteLinkAction,
   checkSlugAvailabilityAction,
 } from "@/app/actions/links";
 import { SLUG_PATTERN, normalizeSlug } from "@/lib/validations";
@@ -282,7 +283,10 @@ export default function LinksClient({
   const [showCreate, setShowCreate] = useState(false);
   const [editingLink, setEditingLink] = useState<LinkRow | null>(null);
   const [qrLink, setQrLink] = useState<LinkRow | null>(null);
+  const [deletingLink, setDeletingLink] = useState<LinkRow | null>(null);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const [deleteLinkLoading, setDeleteLinkLoading] = useState(false);
+  const [deleteLinkError, setDeleteLinkError] = useState<string | null>(null);
 
   useEffect(() => { setLinks(initialLinks); }, [initialLinks]);
 
@@ -301,6 +305,20 @@ export default function LinksClient({
     await updateLinkStatusAction(link.id, status);
     setLinks((prev) => prev.map((l) => l.id === link.id ? { ...l, status } : l));
     setStatusLoading(null);
+  };
+
+  const handleDeleteLink = async () => {
+    if (!deletingLink) return;
+    setDeleteLinkLoading(true);
+    setDeleteLinkError(null);
+    const res = await deleteLinkAction(deletingLink.id);
+    if (res.success) {
+      setLinks((prev) => prev.filter((l) => l.id !== deletingLink.id));
+      setDeletingLink(null);
+    } else {
+      setDeleteLinkError(res.error ?? "Gagal menghapus link");
+    }
+    setDeleteLinkLoading(false);
   };
 
   return (
@@ -410,7 +428,7 @@ export default function LinksClient({
                       </select>
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 6 }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <button
                           id={`qr-btn-${link.id}`}
                           className="btn btn-secondary btn-sm"
@@ -426,6 +444,14 @@ export default function LinksClient({
                           title="Edit target URL"
                         >
                           ✏️
+                        </button>
+                        <button
+                          id={`delete-link-${link.id}`}
+                          className="btn btn-danger btn-sm"
+                          onClick={() => { setDeleteLinkError(null); setDeletingLink(link); }}
+                          title="Hapus Link"
+                        >
+                          🗑️
                         </button>
                       </div>
                     </td>
@@ -519,7 +545,14 @@ export default function LinksClient({
                     className="btn btn-ghost btn-sm"
                     onClick={() => setEditingLink(link)}
                   >
-                    ✏️ Edit Target
+                    ✏️ Edit
+                  </button>
+                  <button
+                    id={`mobile-delete-btn-${link.id}`}
+                    className="btn btn-danger btn-sm"
+                    onClick={() => { setDeleteLinkError(null); setDeletingLink(link); }}
+                  >
+                    🗑️ Hapus
                   </button>
                 </div>
               </div>
@@ -537,6 +570,64 @@ export default function LinksClient({
       )}
       {qrLink && (
         <QRModal link={qrLink} onClose={() => setQrLink(null)} />
+      )}
+
+      {/* Modal Konfirmasi Hapus Link */}
+      {deletingLink && (
+        <div className="modal-overlay" onClick={() => !deleteLinkLoading && setDeletingLink(null)}>
+          <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--color-danger)" }}>
+                <span>🗑️</span>
+                <span>Hapus Link</span>
+              </h2>
+              <button
+                className="modal-close"
+                disabled={deleteLinkLoading}
+                onClick={() => setDeletingLink(null)}
+                id="cancel-delete-link-x-btn"
+              >
+                ×
+              </button>
+            </div>
+
+            {deleteLinkError && (
+              <div className="alert alert-error" style={{ marginBottom: 16 }}>⚠️ {deleteLinkError}</div>
+            )}
+
+            <p style={{ color: "var(--color-text-primary)", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: 16 }}>
+              Apakah Anda yakin ingin menghapus short-link <code style={{ color: "var(--color-primary)", fontWeight: 700, fontFamily: "monospace" }}>/{deletingLink.slug}</code>?
+            </p>
+
+            <div className="alert alert-warning" style={{ fontSize: "0.8125rem", marginBottom: 16 }}>
+              <span>⚠️</span>
+              <div>
+                Kartu fisik atau QR Code yang dicetak dengan tautan ini tidak akan dapat mengarahkan pengunjung lagi setelah dihapus. Data riwayat scan juga akan dihapus permanen.
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={deleteLinkLoading}
+                onClick={() => setDeletingLink(null)}
+                id="cancel-delete-link-btn"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                id="confirm-delete-link-btn"
+                className="btn btn-danger"
+                disabled={deleteLinkLoading}
+                onClick={handleDeleteLink}
+              >
+                {deleteLinkLoading ? "Menghapus..." : "🗑️ Ya, Hapus Link"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

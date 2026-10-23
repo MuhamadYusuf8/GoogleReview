@@ -116,3 +116,34 @@ export async function toggleMerchantStatusAction(
     return { success: false, error: e instanceof Error ? e.message : "Terjadi kesalahan" };
   }
 }
+
+export async function deleteMerchantAction(merchantId: string): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireAdmin();
+
+    // Hapus links terkait terlebih dahulu karena foreign key 'on delete restrict' pada table links
+    // link_target_history dan scan_events otomatis terhapus karena 'on delete cascade' dari links
+    const { error: linksErr } = await supabase
+      .from("links")
+      .delete()
+      .eq("merchant_id", merchantId);
+
+    if (linksErr) {
+      return { success: false, error: "Gagal menghapus link terkait: " + linksErr.message };
+    }
+
+    const { error } = await supabase
+      .from("merchants")
+      .delete()
+      .eq("id", merchantId);
+
+    if (error) return { success: false, error: "Gagal menghapus merchant: " + error.message };
+
+    revalidatePath("/admin/merchants");
+    revalidatePath("/admin/links");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (e: unknown) {
+    return { success: false, error: e instanceof Error ? e.message : "Terjadi kesalahan" };
+  }
+}

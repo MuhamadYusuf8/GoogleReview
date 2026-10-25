@@ -40,8 +40,8 @@ export default function AdminLoading() {
         ))}
       </div>
 
-      {/* Skeleton Table Card */}
-      <div className="card" style={{ padding: "20px 24px" }}>
+      {/* Desktop Skeleton Table */}
+      <div className="card desktop-table-wrapper" style={{ padding: "20px 24px" }}>
         {/* Table controls */}
         <div style={{
           display: "flex",
@@ -86,6 +86,31 @@ export default function AdminLoading() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Mobile Skeleton Cards (< 769px) */}
+      <div className="mobile-card-list">
+        {[1, 2, 3].map((card) => (
+          <div key={card} className="mobile-card" style={{ gap: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div className="skeleton" style={{ width: "55%", height: 18, borderRadius: 6 }} />
+              <div className="skeleton" style={{ width: 64, height: 22, borderRadius: 12 }} />
+            </div>
+            <div className="skeleton" style={{ width: "85%", height: 14, borderRadius: 4 }} />
+            <div className="skeleton" style={{ width: "45%", height: 12, borderRadius: 4 }} />
+            <div style={{
+              display: "flex",
+              gap: 8,
+              marginTop: 4,
+              paddingTop: 10,
+              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+            }}>
+              <div className="skeleton" style={{ flex: 1, height: 36, borderRadius: 8 }} />
+              <div className="skeleton" style={{ flex: 1, height: 36, borderRadius: 8 }} />
+              <div className="skeleton" style={{ width: 36, height: 36, borderRadius: 8 }} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -20,10 +20,12 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ userEmail, userName }: AdminSidebarProps) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
-  // Close drawer on route change
+  // Close drawer and reset navigating state on route change
   useEffect(() => {
     setDrawerOpen(false);
+    setNavigatingTo(null);
   }, [pathname]);
 
   // Prevent body scrolling when mobile drawer is open
@@ -56,19 +58,37 @@ export default function AdminSidebar({ userEmail, userName }: AdminSidebarProps)
             const isActive = item.exact
               ? pathname === item.href
               : pathname.startsWith(item.href);
+            const isNavigating = navigatingTo === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 id={`nav-${item.label.toLowerCase()}`}
+                onClick={() => {
+                  if (pathname !== item.href) setNavigatingTo(item.href);
+                }}
                 className={`sidebar-nav-item ${isActive ? "active" : ""}`}
+                style={{ position: "relative" }}
               >
                 <span className="nav-icon">{item.icon}</span>
-                {item.label}
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {isNavigating && (
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "var(--color-primary)",
+                      boxShadow: "0 0 8px var(--color-primary)",
+                      animation: "spin 0.6s linear infinite",
+                    }}
+                  />
+                )}
               </Link>
             );
           })}
         </nav>
+
 
         {/* Footer */}
         <div className="sidebar-footer">
@@ -223,14 +243,25 @@ export default function AdminSidebar({ userEmail, userName }: AdminSidebarProps)
           const isActive = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href);
+          const isNavigating = navigatingTo === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => {
+                if (pathname !== item.href) setNavigatingTo(item.href);
+              }}
               className={`mobile-bottom-item ${isActive ? "active" : ""}`}
             >
-              <span className="mobile-bottom-icon">{item.icon}</span>
-              <span className="mobile-bottom-label">{item.label}</span>
+              <span
+                className="mobile-bottom-icon"
+                style={isNavigating ? { transform: "scale(1.2)", transition: "transform 0.15s ease" } : {}}
+              >
+                {item.icon}
+              </span>
+              <span className="mobile-bottom-label">
+                {isNavigating ? "Memuat..." : item.label}
+              </span>
             </Link>
           );
         })}

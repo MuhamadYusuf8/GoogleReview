@@ -559,8 +559,45 @@ tbody tr:hover { background: rgba(255,255,255,0.025); }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@keyframes pageTransitionIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeletonPulse {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
 .spin { animation: spin 1s linear infinite; }
 .fade-in { animation: fadeIn 300ms ease; }
+
+.page-transition,
+.admin-content {
+  animation: pageTransitionIn 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
 
 /* ─── Responsive Adjustments ──────────────────────────────────────────────── */
 @media (max-width: 768px) {

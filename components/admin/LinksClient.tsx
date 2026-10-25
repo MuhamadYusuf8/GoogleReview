@@ -543,6 +543,13 @@ export default function LinksClient({
                 </div>
 
                 <div className="mobile-card-actions">
+                  <button
+                    id={`mobile-qr-btn-${link.id}`}
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setQrLink(link)}
+                  >
+                    📷 QR & NFC
+                  </button>
                   <a
                     href={`/review/${link.slug}`}
                     target="_blank"
@@ -553,18 +560,11 @@ export default function LinksClient({
                     ⭐ Tes Review
                   </a>
                   <button
-                    id={`mobile-qr-btn-${link.id}`}
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setQrLink(link)}
-                  >
-                    📷 QR & NFC
-                  </button>
-                  <button
                     id={`mobile-edit-btn-${link.id}`}
                     className="btn btn-ghost btn-sm"
                     onClick={() => setEditingLink(link)}
                   >
-                    ✏️ Edit
+                    ✏️ Edit Target
                   </button>
                   <button
                     id={`mobile-delete-btn-${link.id}`}

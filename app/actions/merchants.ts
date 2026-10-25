@@ -24,6 +24,14 @@ interface ActionResult {
   id?: string;
 }
 
+function processNotesWithGate(rawNotes: string | null, isGateEnabled: boolean): string | null {
+  let cleaned = (rawNotes ?? "").replace(/\[review_gate:\s*off\]/g, "").trim();
+  if (!isGateEnabled) {
+    cleaned = cleaned ? `${cleaned} [review_gate: off]` : `[review_gate: off]`;
+  }
+  return cleaned || null;
+}
+
 export async function createMerchantAction(
   _prev: ActionResult,
   formData: FormData
@@ -31,12 +39,15 @@ export async function createMerchantAction(
   try {
     const { supabase } = await requireAdmin();
 
+    const isGateEnabled = formData.get("review_gate_enabled") === "on" || formData.get("review_gate_enabled") === "true";
+    const rawNotes = formData.get("notes") as string || null;
+
     const raw = {
       name: formData.get("name") as string,
       contact_name: formData.get("contact_name") as string || null,
       contact_phone: formData.get("contact_phone") as string || null,
       google_place_id: formData.get("google_place_id") as string || null,
-      notes: formData.get("notes") as string || null,
+      notes: processNotesWithGate(rawNotes, isGateEnabled),
       is_active: true,
     };
 
@@ -68,12 +79,15 @@ export async function updateMerchantAction(
     const { supabase } = await requireAdmin();
     const id = formData.get("id") as string;
 
+    const isGateEnabled = formData.get("review_gate_enabled") === "on" || formData.get("review_gate_enabled") === "true";
+    const rawNotes = formData.get("notes") as string || null;
+
     const raw = {
       name: formData.get("name") as string,
       contact_name: formData.get("contact_name") as string || null,
       contact_phone: formData.get("contact_phone") as string || null,
       google_place_id: formData.get("google_place_id") as string || null,
-      notes: formData.get("notes") as string || null,
+      notes: processNotesWithGate(rawNotes, isGateEnabled),
       is_active: formData.get("is_active") === "true",
     };
 
@@ -88,6 +102,7 @@ export async function updateMerchantAction(
       .eq("id", id);
 
     if (error) return { success: false, error: "Gagal memperbarui: " + error.message };
+
 
     revalidatePath("/admin/merchants");
     return { success: true };

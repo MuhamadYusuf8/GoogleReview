@@ -1,6 +1,11 @@
 import { NextResponse, after } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
-import { isValidSlugFormat, normalizeSlug, isAllowedTargetUrl } from "@/lib/validations";
+import {
+  isValidSlugFormat,
+  normalizeSlug,
+  isAllowedTargetUrl,
+  isReviewGateEnabled,
+} from "@/lib/validations";
 import { buildScanPayload } from "@/lib/analytics";
 
 export const runtime = "nodejs"; // Benchmark dulu; ganti ke "edge" jika latency lebih baik
@@ -27,7 +32,7 @@ export async function GET(
   try {
     const result = await supabase
       .from("links")
-      .select("id, target_url, status, merchants!inner(is_active)")
+      .select("id, target_url, status, merchants!inner(id, name, is_active, contact_phone, notes)")
       .eq("slug", slug)
       .single();
     data = result.data;
@@ -78,7 +83,25 @@ export async function GET(
     }
   });
 
-  // ── 7. Redirect 302 ─────────────────────────────────────────────────────
+  // ── 7. Filter Ulasan (Bintang 1-3 ke WA, Bintang 4-5 ke Google) ──────────
+  if (isReviewGateEnabled(merchant?.notes, merchant?.contact_phone)) {
+    const originalUrl = new URL(request.url);
+    const reviewUrl = new URL(`/review/${slug}`, request.url);
+    originalUrl.searchParams.forEach((val, key) => {
+      reviewUrl.searchParams.set(key, val);
+    });
+
+    return NextResponse.redirect(reviewUrl, {
+      status: 302,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "X-Robots-Tag": "noindex",
+        "Referrer-Policy": "no-referrer",
+      },
+    });
+  }
+
+  // ── 8. Redirect 302 Langsung (jika Filter WA nonaktif/tanpa no HP) ───────
   return NextResponse.redirect(data.target_url, {
     status: 302,
     headers: {
@@ -88,3 +111,4 @@ export async function GET(
     },
   });
 }
+

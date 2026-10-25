@@ -429,6 +429,16 @@ export default function LinksClient({
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <a
+                          href={`/review/${link.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-ghost btn-sm"
+                          title="Uji Halaman Review Filter (⭐ 1-3 ke WA, 4-5 ke Google)"
+                          style={{ textDecoration: "none", color: "var(--color-warning)" }}
+                        >
+                          ⭐ Tes Review
+                        </a>
                         <button
                           id={`qr-btn-${link.id}`}
                           className="btn btn-secondary btn-sm"
@@ -533,6 +543,15 @@ export default function LinksClient({
                 </div>
 
                 <div className="mobile-card-actions">
+                  <a
+                    href={`/review/${link.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost btn-sm"
+                    style={{ textDecoration: "none", color: "var(--color-warning)" }}
+                  >
+                    ⭐ Tes Review
+                  </a>
                   <button
                     id={`mobile-qr-btn-${link.id}`}
                     className="btn btn-secondary btn-sm"

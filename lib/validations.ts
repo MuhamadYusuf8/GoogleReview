@@ -107,8 +107,63 @@ export function isAllowedTargetUrl(url: string): boolean {
   }
 }
 
+/** Format dan normalisasi nomor WhatsApp (standar internasional, e.g. 62812...). */
+export function formatWhatsAppNumber(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  let digits = phone.replace(/\D/g, "");
+  if (!digits || digits.length < 8) return null;
+
+  if (digits.startsWith("0")) {
+    digits = "62" + digits.slice(1);
+  } else if (!digits.startsWith("62") && digits.startsWith("8")) {
+    digits = "62" + digits;
+  }
+
+  return digits;
+}
+
+/** Cek apakah fitur Review Gate (Filter Bintang 1-3 ke WA) aktif. */
+export function isReviewGateEnabled(
+  notes: string | null | undefined,
+  phone: string | null | undefined
+): boolean {
+  const wa = formatWhatsAppNumber(phone);
+  if (!wa) return false;
+  if (notes && notes.includes("[review_gate: off]")) return false;
+  return true;
+}
+
+/** Buat link WhatsApp langsung dengan pesan komplain pre-filled. */
+export function buildWhatsAppReviewUrl(
+  phone: string,
+  merchantName: string,
+  rating?: number,
+  reason?: string,
+  customNote?: string
+): string {
+  const cleanPhone = formatWhatsAppNumber(phone);
+  if (!cleanPhone) return "#";
+
+  let message = `Halo ${merchantName}, saya pelanggan Anda`;
+  if (rating) {
+    const stars = "⭐".repeat(Math.min(Math.max(rating, 1), 5));
+    message += ` (penilaian: ${stars} ${rating}/5)`;
+  }
+  message += `.\nSaya ingin menyampaikan masukan langsung terkait pelayanan:`;
+
+  if (reason && reason.trim()) {
+    message += `\n• Masalah: ${reason.trim()}`;
+  }
+  if (customNote && customNote.trim()) {
+    message += `\n• Detail: ${customNote.trim()}`;
+  }
+
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+}
+
 // ─── Type exports ─────────────────────────────────────────────────────────────
 
 export type MerchantFormData = z.infer<typeof merchantSchema>;
 export type CreateLinkFormData = z.infer<typeof createLinkSchema>;
 export type UpdateLinkFormData = z.infer<typeof updateLinkSchema>;
+

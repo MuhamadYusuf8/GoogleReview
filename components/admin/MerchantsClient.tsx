@@ -8,7 +8,7 @@ import {
   toggleMerchantStatusAction,
   deleteMerchantAction,
 } from "@/app/actions/merchants";
-import { buildReviewUrl } from "@/lib/validations";
+import { buildReviewUrl, formatWhatsAppNumber } from "@/lib/validations";
 
 type Merchant = {
   id: string;
@@ -47,9 +47,12 @@ function MerchantModal({
     if (state.success) onClose();
   }, [state.success, onClose]);
 
+  const cleanNotes = merchant?.notes ? merchant.notes.replace(/\[review_gate:\s*off\]/g, "").trim() : "";
+  const isGateChecked = merchant?.notes ? !merchant.notes.includes("[review_gate: off]") : true;
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
+      <div className="modal" style={{ maxWidth: 560 }}>
         <div className="modal-header">
           <h2 className="modal-title">{isEdit ? "Edit Merchant" : "Tambah Merchant Baru"}</h2>
           <button className="modal-close" onClick={onClose} id="merchant-modal-close">×</button>
@@ -74,8 +77,45 @@ function MerchantModal({
               <input id="merchant-contact-name" name="contact_name" className="form-input" defaultValue={merchant?.contact_name ?? ""} placeholder="Budi Santoso" />
             </div>
             <div className="form-group">
-              <label className="form-label">Nomor HP</label>
+              <label className="form-label">Nomor WhatsApp Owner</label>
               <input id="merchant-contact-phone" name="contact_phone" className="form-input" defaultValue={merchant?.contact_phone ?? ""} placeholder="08123456789" />
+              <span className="form-hint">Untuk menerima komplain dari ulasan bintang 1–3.</span>
+            </div>
+          </div>
+
+          {/* Toggle Review Filter (Bintang 1-3 ke WA, 4-5 ke Google) */}
+          <div style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            padding: "12px 14px",
+          }}>
+            <label style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+            }}>
+              <input
+                type="checkbox"
+                name="review_gate_enabled"
+                defaultChecked={isGateChecked}
+                style={{ width: 18, height: 18, cursor: "pointer", accentColor: "var(--color-primary)" }}
+              />
+              <span>🛡️ Aktifkan Filter Ulasan WhatsApp (Anti Rating Jelek)</span>
+            </label>
+            <div style={{
+              fontSize: "0.8rem",
+              color: "var(--color-text-secondary)",
+              marginTop: 6,
+              lineHeight: 1.5,
+              paddingLeft: 28,
+            }}>
+              ⭐ <strong>Bintang 4–5:</strong> Otomatis lanjut ke Google Maps.<br />
+              ⭐ <strong>Bintang 1–3:</strong> Otomatis dibawa ke chat WhatsApp owner agar komplain tertangani privat.
             </div>
           </div>
 
@@ -106,7 +146,7 @@ function MerchantModal({
 
           <div className="form-group">
             <label className="form-label">Catatan Internal</label>
-            <textarea id="merchant-notes" name="notes" className="form-textarea" defaultValue={merchant?.notes ?? ""} placeholder="Informasi tambahan tentang merchant ini..." />
+            <textarea id="merchant-notes" name="notes" className="form-textarea" defaultValue={cleanNotes} placeholder="Informasi tambahan tentang merchant ini..." />
           </div>
 
           <div className="modal-footer">
@@ -209,7 +249,9 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
                     <td>
                       <div style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{m.name}</div>
                       {m.notes && (
-                        <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: 2 }}>{m.notes}</div>
+                        <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: 2 }}>
+                          {m.notes.replace(/\[review_gate:\s*off\]/g, "").trim()}
+                        </div>
                       )}
                     </td>
                     <td>
@@ -217,6 +259,23 @@ export default function MerchantsClient({ initialMerchants }: { initialMerchants
                       {m.contact_phone && (
                         <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>{m.contact_phone}</div>
                       )}
+                      {m.contact_phone && formatWhatsAppNumber(m.contact_phone) && !m.notes?.includes("[review_gate: off]") ? (
+                        <span style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          color: "#10b981",
+                          background: "rgba(16, 185, 129, 0.12)",
+                          border: "1px solid rgba(16, 185, 129, 0.25)",
+                          padding: "2px 8px",
+                          borderRadius: 12,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          marginTop: 4,
+                        }}>
+                          💬 WA Filter Aktif
+                        </span>
+                      ) : null}
                     </td>
                     <td>
                       <span style={{ fontWeight: 600, color: "var(--color-primary)" }}>{linkCount}</span>
